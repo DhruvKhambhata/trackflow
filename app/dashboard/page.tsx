@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { LogOut, Plus, BarChart3, Calendar, Target, Flame, Zap } from "lucide-react"
+import { LogOut, Plus, BarChart3, Calendar, Target, Flame, Zap, Settings } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { getUser, removeUser, getActivities, getLogsForDate, getTodayString, calculateStreak } from "@/lib/storage"
@@ -147,7 +147,12 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">{getMotivationalMessage()}</p>
             </div>
             <ThemeToggle />
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
+            <Link href="/settings">
+              <Button variant="ghost" size="icon" title="Settings">
+                <Settings className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
               <LogOut className="w-4 h-4" />
             </Button>
           </div>

@@ -12,6 +12,7 @@ import { Eye, EyeOff, UserPlus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { saveUser, generateId } from "@/lib/storage"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { sendWelcomeEmail } from "@/lib/email-service"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -65,10 +66,24 @@ export default function RegisterPage() {
 
       saveUser(user)
 
-      toast({
-        title: "Account created successfully!",
-        description: "Welcome to TrackFlow. Let's start building better habits!",
-      })
+      // Send welcome email
+      try {
+        await sendWelcomeEmail({
+          name: user.name,
+          email: user.email,
+        })
+
+        toast({
+          title: "Welcome to TrackFlow! 🎉",
+          description: "Account created successfully! Check your email for a welcome message with tips to get started.",
+        })
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError)
+        toast({
+          title: "Account created successfully!",
+          description: "Welcome to TrackFlow! Let's start building better habits together!",
+        })
+      }
 
       router.push("/dashboard")
     } catch (error) {

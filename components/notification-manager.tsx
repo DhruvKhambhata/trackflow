@@ -12,30 +12,46 @@ export default function NotificationManager() {
       navigator.serviceWorker
         .register("/sw.js")
         .then((registration) => {
-          console.log("SW registered: ", registration)
+          console.log("SW registered successfully:", registration)
+
+          // Check for updates
+          registration.addEventListener("updatefound", () => {
+            const newWorker = registration.installing
+            if (newWorker) {
+              newWorker.addEventListener("statechange", () => {
+                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                  toast({
+                    title: "App updated!",
+                    description: "A new version is available. Refresh to update.",
+                  })
+                }
+              })
+            }
+          })
         })
         .catch((registrationError) => {
-          console.log("SW registration failed: ", registrationError)
+          console.log("SW registration failed:", registrationError)
         })
     }
 
-    // Request notification permission
+    // Request notification permission after user interaction
     const requestNotificationPermission = async () => {
       if ("Notification" in window && Notification.permission === "default") {
-        const permission = await Notification.requestPermission()
-        if (permission === "granted") {
-          toast({
-            title: "Notifications enabled!",
-            description: "You'll receive daily reminders to track your activities.",
-          })
-        }
+        // Don't auto-request, let user enable in settings
+        console.log("Notification permission is default, user can enable in settings")
       }
     }
 
-    // Auto-request permission after a delay
-    const timer = setTimeout(requestNotificationPermission, 5000)
+    // Check if app was launched from home screen
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      console.log("App is running in standalone mode")
+      toast({
+        title: "Welcome to TrackFlow!",
+        description: "App installed successfully. Start tracking your activities!",
+      })
+    }
 
-    return () => clearTimeout(timer)
+    requestNotificationPermission()
   }, [toast])
 
   return null

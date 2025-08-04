@@ -20,6 +20,19 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "application/javascript",
+          },
+          {
+            key: "Service-Worker-Allowed",
+            value: "/",
+          },
+        ],
+      },
     ]
   },
 }
