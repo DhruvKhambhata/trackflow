@@ -7,13 +7,13 @@ import EmailSubscription from "@/models/EmailSubscription"
 
 // Configure web-push
 webpush.setVapidDetails(
-  "mailto:your-email@example.com",
+   process.env.VAPID_EMAIL || "",
   process.env.VAPID_PUBLIC_KEY || "",
   process.env.VAPID_PRIVATE_KEY || "",
 )
 
 // Configure nodemailer
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   service: "gmail", // or your email service
   auth: {
     user: process.env.EMAIL_USER,
