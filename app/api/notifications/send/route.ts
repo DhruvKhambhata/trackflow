@@ -5,12 +5,20 @@ import { connectDB } from "@/lib/mongodb"
 import PushSubscription from "@/models/PushSubscription"
 import EmailSubscription from "@/models/EmailSubscription"
 
-// Configure web-push
+const vapidEmail = process.env.VAPID_EMAIL
+const vapidPublicKey = process.env.VAPID_PUBLIC_KEY
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
+
+if (!vapidEmail || !vapidPublicKey || !vapidPrivateKey) {
+  throw new Error("Missing VAPID config: make sure VAPID_EMAIL, VAPID_PUBLIC_KEY, and VAPID_PRIVATE_KEY are set.")
+}
+
 webpush.setVapidDetails(
-   process.env.VAPID_EMAIL || "",
-  process.env.VAPID_PUBLIC_KEY || "",
-  process.env.VAPID_PRIVATE_KEY || "",
+  `mailto:${vapidEmail}`,
+  vapidPublicKey,
+  vapidPrivateKey
 )
+
 
 // Configure nodemailer
 const transporter = nodemailer.createTransport({
