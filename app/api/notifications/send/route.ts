@@ -1,24 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server"
-import webpush from "web-push"
-import nodemailer from "nodemailer"
-import { connectDB } from "@/lib/mongodb"
-import PushSubscription from "@/models/PushSubscription"
-import EmailSubscription from "@/models/EmailSubscription"
-
-const vapidEmail = process.env.VAPID_EMAIL
-const vapidPublicKey = process.env.VAPID_PUBLIC_KEY
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
-
-if (!vapidEmail || !vapidPublicKey || !vapidPrivateKey) {
-  throw new Error("Missing VAPID config: make sure VAPID_EMAIL, VAPID_PUBLIC_KEY, and VAPID_PRIVATE_KEY are set.")
-}
-
-webpush.setVapidDetails(
-  `mailto:${vapidEmail}`,
-  vapidPublicKey,
-  vapidPrivateKey
-)
-
+import { type NextRequest, NextResponse } from "next/server";
+import webpush from "web-push";
+import nodemailer from "nodemailer";
+import { connectDB } from "@/lib/mongodb";
+import PushSubscription from "@/models/PushSubscription";
+import EmailSubscription from "@/models/EmailSubscription";
 
 // Configure nodemailer
 const transporter = nodemailer.createTransport({
@@ -27,51 +12,69 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-})
+});
 
 export async function POST(request: NextRequest) {
   try {
-    await connectDB()
+    await connectDB();
 
-    const { type, message, userId } = await request.json()
+    const { type, message, userId } = await request.json();
 
     if (type === "push") {
-      await sendPushNotifications(message, userId)
+      await sendPushNotifications(message, userId);
     } else if (type === "email") {
-      await sendEmailNotifications(message, userId)
+      await sendEmailNotifications(message, userId);
     } else if (type === "daily-reminder") {
-      await sendDailyReminders()
+      await sendDailyReminders();
     }
 
-    return NextResponse.json({ message: "Notifications sent successfully" })
+    return NextResponse.json({ message: "Notifications sent successfully" });
   } catch (error) {
-    console.error("Send notification error:", error)
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
+    console.error("Send notification error:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
 async function sendPushNotifications(message: string, userId?: string) {
-  const query = userId ? { userId, isActive: true } : { isActive: true }
-  const subscriptions = await PushSubscription.find(query)
+  const vapidEmail = process.env.VAPID_EMAIL;
+  const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+
+  if (!vapidEmail || !vapidPublicKey || !vapidPrivateKey) {
+    throw new Error(
+      "Missing VAPID config: make sure VAPID_EMAIL, VAPID_PUBLIC_KEY, and VAPID_PRIVATE_KEY are set."
+    );
+  }
+
+  webpush.setVapidDetails(
+    `mailto:${vapidEmail}`,
+    vapidPublicKey,
+    vapidPrivateKey
+  );
+  const query = userId ? { userId, isActive: true } : { isActive: true };
+  const subscriptions = await PushSubscription.find(query);
 
   const promises = subscriptions.map(async (sub) => {
     try {
-      const subscription = JSON.parse(sub.subscription)
-      await webpush.sendNotification(subscription, message)
+      const subscription = JSON.parse(sub.subscription);
+      await webpush.sendNotification(subscription, message);
     } catch (error) {
-      console.error("Failed to send push notification:", error)
+      console.error("Failed to send push notification:", error);
       // Mark subscription as inactive if it fails
-      sub.isActive = false
-      await sub.save()
+      sub.isActive = false;
+      await sub.save();
     }
-  })
+  });
 
-  await Promise.all(promises)
+  await Promise.all(promises);
 }
 
 async function sendEmailNotifications(message: string, userId?: string) {
-  const query = userId ? { userId, isActive: true } : { isActive: true }
-  const subscriptions = await EmailSubscription.find(query).populate("userId")
+  const query = userId ? { userId, isActive: true } : { isActive: true };
+  const subscriptions = await EmailSubscription.find(query).populate("userId");
 
   const promises = subscriptions.map(async (sub) => {
     try {
@@ -112,30 +115,33 @@ async function sendEmailNotifications(message: string, userId?: string) {
             </div>
           </div>
         `,
-      }
+      };
 
-      await transporter.sendMail(mailOptions)
+      await transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error("Failed to send email notification:", error)
+      console.error("Failed to send email notification:", error);
     }
-  })
+  });
 
-  await Promise.all(promises)
+  await Promise.all(promises);
 }
 
 async function sendDailyReminders() {
-  const now = new Date()
-  const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`
+  const now = new Date();
+  const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now
+    .getMinutes()
+    .toString()
+    .padStart(2, "0")}`;
 
   // Send push notifications
   const pushSubs = await PushSubscription.find({
     isActive: true,
     reminderTime: currentTime,
-  })
+  });
 
   for (const sub of pushSubs) {
     try {
-      const subscription = JSON.parse(sub.subscription)
+      const subscription = JSON.parse(sub.subscription);
       await webpush.sendNotification(
         subscription,
         JSON.stringify({
@@ -144,12 +150,12 @@ async function sendDailyReminders() {
           icon: "/icons/icon-192x192.png",
           badge: "/icons/icon-72x72.png",
           data: { url: "/log" },
-        }),
-      )
+        })
+      );
     } catch (error) {
-      console.error("Failed to send daily push reminder:", error)
-      sub.isActive = false
-      await sub.save()
+      console.error("Failed to send daily push reminder:", error);
+      sub.isActive = false;
+      await sub.save();
     }
   }
 
@@ -157,11 +163,11 @@ async function sendDailyReminders() {
   const emailSubs = await EmailSubscription.find({
     isActive: true,
     reminderTime: currentTime,
-  }).populate("userId")
+  }).populate("userId");
 
   for (const sub of emailSubs) {
     try {
-      const user = sub.userId as any
+      const user = sub.userId as any;
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: sub.email,
@@ -223,11 +229,11 @@ async function sendDailyReminders() {
             </div>
           </div>
         `,
-      }
+      };
 
-      await transporter.sendMail(mailOptions)
+      await transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error("Failed to send daily email reminder:", error)
+      console.error("Failed to send daily email reminder:", error);
     }
   }
 }
