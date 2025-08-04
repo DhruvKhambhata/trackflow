@@ -21,7 +21,8 @@ export default function LandingPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-md dark:bg-gray-900/80">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-2">
+          {/* Logo */}
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
               <Activity className="w-5 h-5 text-white" />
@@ -30,13 +31,17 @@ export default function LandingPage() {
               TrackFlow
             </span>
           </div>
-          <div className="flex items-center space-x-4">
+
+          {/* Buttons */}
+          <div className="flex flex-wrap items-center gap-2 justify-end">
             <ThemeToggle />
             <Link href="/login">
-              <Button variant="ghost">Login</Button>
+              <Button variant="ghost" className="w-full sm:w-auto">
+                Login
+              </Button>
             </Link>
             <Link href="/register">
-              <Button>Get Started</Button>
+              <Button className="w-full sm:w-auto">Get Started</Button>
             </Link>
           </div>
         </div>
